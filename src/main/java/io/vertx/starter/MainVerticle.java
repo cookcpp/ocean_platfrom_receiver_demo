@@ -7,7 +7,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.starter.controller.AbstractController;
+import io.vertx.starter.controller.DemoController;
+import io.vertx.starter.controller.IndexController;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author wuqinghua
@@ -16,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 public class MainVerticle extends AbstractVerticle {
 
   final int port = 8080;
+
+  private List<AbstractController> controllerList = new ArrayList<>();
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
@@ -29,18 +37,11 @@ public class MainVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    router.get("/").handler(context -> {
-      context.response()
-        .putHeader("content-type", "text/plain")
-        .end("Hello from Vert.x!");
-    });
-    router.post("/demo").handler(context -> {
-      log.info("## Client request:{}", context.getBodyAsJson());
-      context.response()
-        .putHeader("content-type", "application/json")
-        .end(new JsonObject().put("hello", "world").toBuffer());
-    });
 
+    controllerList.add(new IndexController(router));
+    controllerList.add(new DemoController(router));
+
+    controllerList.forEach(AbstractController::init);
 
     vertx.createHttpServer(options)
       .requestHandler(router)
